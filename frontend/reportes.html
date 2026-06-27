@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventario Violeta</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: #f5f5f5; color: #333; }
+    header { background: #6c3483; color: white; padding: 16px 24px; font-size: 20px; font-weight: bold; }
+    nav { background: #5b2c6f; display: flex; gap: 4px; padding: 0 24px; }
+    nav a { color: #ddd; text-decoration: none; padding: 10px 16px; font-size: 14px; display: block; }
+    nav a:hover { color: white; background: rgba(255,255,255,0.1); }
+    nav a.activo { color: white; border-bottom: 3px solid white; }
+    .contenido { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
+    .barra-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 12px; }
+    .cards-resumen { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+    .card-stat { background: white; border-radius: 8px; padding: 16px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+    .card-stat .label { font-size: 12px; color: #999; margin-bottom: 4px; }
+    .card-stat .valor { font-size: 24px; font-weight: bold; color: #6c3483; }
+    button { padding: 8px 16px; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; }
+    .btn-exportar { background: #27ae60; color: white; }
+    .btn-exportar:hover { background: #1e8449; }
+    table { width: 100%; background: white; border-radius: 8px; border-collapse: collapse; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+    th { background: #6c3483; color: white; padding: 12px; text-align: left; font-size: 13px; }
+    td { padding: 10px 12px; border-bottom: 1px solid #eee; font-size: 13px; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fdf2ff; }
+    .btn-detalle { background: #8e44ad; color: white; padding: 4px 10px; font-size: 12px; border-radius: 4px; }
+    .modal-fondo { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
+    .modal-fondo.activo { display: flex; }
+    .modal { background: white; border-radius: 10px; padding: 24px; width: 560px; max-width: 95%; max-height: 80vh; overflow-y: auto; }
+    .modal h2 { color: #6c3483; font-size: 18px; margin-bottom: 4px; }
+    .modal-sub { font-size: 13px; color: #999; margin-bottom: 16px; }
+    .detalle-tabla { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+    .detalle-tabla th { background: #f5f5f5; color: #555; padding: 8px 10px; text-align: left; font-size: 12px; }
+    .detalle-tabla td { padding: 8px 10px; border-bottom: 1px solid #eee; font-size: 13px; }
+    .detalle-totales { border-top: 2px solid #eee; padding-top: 12px; }
+    .detalle-fila { display: flex; justify-content: space-between; font-size: 14px; padding: 4px 0; }
+    .detalle-fila.total { font-weight: bold; color: #6c3483; font-size: 16px; }
+    .modal-botones { display: flex; justify-content: flex-end; margin-top: 16px; }
+    .btn-cancelar { background: #ccc; color: #333; }
+    input[type="date"] { padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+  </style>
+</head>
+<body>
+
+<header>🛍️ Inventario Violeta</header>
+<nav>
+  <a href="/">Productos</a>
+  <a href="/inventario.html">Inventario</a>
+  <a href="/ventas.html">Ventas</a>
+  <a href="/reportes.html" class="activo">Reportes</a>
+</nav>
+
+<div class="contenido">
+
+  <div class="cards-resumen">
+    <div class="card-stat">
+      <div class="label">Total ventas</div>
+      <div class="valor" id="stat-ventas">—</div>
+    </div>
+    <div class="card-stat">
+      <div class="label">Ingresos totales</div>
+      <div class="valor" id="stat-ingresos">—</div>
+    </div>
+    <div class="card-stat">
+      <div class="label">Comisiones totales</div>
+      <div class="valor" id="stat-comisiones">—</div>
+    </div>
+  </div>
+
+  <div class="barra-top">
+    <div style="display:flex;gap:8px;align-items:center">
+      <input type="date" id="filtro-desde">
+      <span style="font-size:13px;color:#999">hasta</span>
+      <input type="date" id="filtro-hasta">
+      <button onclick="cargarVentas()" style="background:#6c3483;color:white">Filtrar</button>
+      <button onclick="limpiarFiltro()" style="background:#eee;color:#333">Ver todo</button>
+    </div>
+    <button class="btn-exportar" onclick="exportar()">⬇ Exportar Excel</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Fecha</th>
+        <th>Cliente</th>
+        <th>Colaborador</th>
+        <th>Total</th>
+        <th>Comisión</th>
+        <th>Detalle</th>
+      </tr>
+    </thead>
+    <tbody id="tabla-ventas">
+      <tr><td colspan="7" style="text-align:center;padding:24px;color:#999">Cargando...</td></tr>
+    </tbody>
+  </table>
+
+</div>
+
+<!-- Modal detalle -->
+<div class="modal-fondo" id="modal-detalle">
+  <div class="modal">
+    <h2 id="detalle-titulo">Venta #</h2>
+    <div class="modal-sub" id="detalle-sub"></div>
+    <table class="detalle-tabla">
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Cant.</th>
+          <th>Precio unit.</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody id="detalle-items"></tbody>
+    </table>
+    <div class="detalle-totales">
+      <div class="detalle-fila"><span>Subtotal</span><span id="detalle-subtotal"></span></div>
+      <div class="detalle-fila total"><span>Total</span><span id="detalle-total"></span></div>
+      <div class="detalle-fila"><span style="color:#999;font-size:13px">Comisión</span><span id="detalle-comision" style="color:#999;font-size:13px"></span></div>
+    </div>
+    <div class="modal-botones">
+      <button class="btn-cancelar" onclick="cerrarDetalle()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let todasLasVentas = []
+
+  function formatPrecio(v) {
+    return '$' + Number(v || 0).toLocaleString('es-CO')
+  }
+
+  function formatFecha(f) {
+    if (!f) return '—'
+    return f.replace('T', ' ').substring(0, 16)
+  }
+
+  async function cargarVentas() {
+    const desde = document.getElementById('filtro-desde').value
+    const hasta = document.getElementById('filtro-hasta').value
+
+    const res = await fetch('/api/ventas')
+    todasLasVentas = await res.json()
+
+    let filtradas = todasLasVentas
+
+    if (desde) filtradas = filtradas.filter(v => v.fecha >= desde)
+    if (hasta) filtradas = filtradas.filter(v => v.fecha <= hasta + ' 23:59:59')
+
+    const totalVentas = filtradas.length
+    const totalIngresos = filtradas.reduce((sum, v) => sum + v.total, 0)
+    const totalComisiones = filtradas.reduce((sum, v) => sum + v.valor_comision, 0)
+
+    document.getElementById('stat-ventas').textContent = totalVentas
+    document.getElementById('stat-ingresos').textContent = formatPrecio(totalIngresos)
+    document.getElementById('stat-comisiones').textContent = formatPrecio(totalComisiones)
+
+    const tbody = document.getElementById('tabla-ventas')
+
+    if (filtradas.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:#999">No hay ventas registradas</td></tr>'
+      return
+    }
+
+    tbody.innerHTML = filtradas.map(v => `
+      <tr>
+        <td>#${v.id}</td>
+        <td>${formatFecha(v.fecha)}</td>
+        <td>${v.cliente || '—'}</td>
+        <td>${v.colaborador || '—'}</td>
+        <td style="font-weight:bold;color:#6c3483">${formatPrecio(v.total)}</td>
+        <td style="color:#999;font-size:12px">${formatPrecio(v.valor_comision)}</td>
+        <td><button class="btn-detalle" onclick="verDetalle(${v.id})">Ver</button></td>
+      </tr>
+    `).join('')
+  }
+
+  function limpiarFiltro() {
+    document.getElementById('filtro-desde').value = ''
+    document.getElementById('filtro-hasta').value = ''
+    cargarVentas()
+  }
+
+  async function verDetalle(id) {
+    const res = await fetch(`/api/ventas/${id}`)
+    const venta = await res.json()
+
+    document.getElementById('detalle-titulo').textContent = `Venta #${venta.id}`
+    document.getElementById('detalle-sub').textContent = `${formatFecha(venta.fecha)} — Cliente: ${venta.cliente || '—'} — Colaborador: ${venta.colaborador || '—'}`
+
+    document.getElementById('detalle-items').innerHTML = venta.detalle.map(d => `
+      <tr>
+        <td>${d.nombre}</td>
+        <td>${d.cantidad}</td>
+        <td>${formatPrecio(d.precio_manual || d.precio_unitario)}</td>
+        <td>${formatPrecio(d.total)}</td>
+      </tr>
+    `).join('')
+
+    document.getElementById('detalle-subtotal').textContent = formatPrecio(venta.subtotal)
+    document.getElementById('detalle-total').textContent = formatPrecio(venta.total)
+    document.getElementById('detalle-comision').textContent = `${venta.porcentaje_comision}% — ${formatPrecio(venta.valor_comision)}`
+
+    document.getElementById('modal-detalle').classList.add('activo')
+  }
+
+  function cerrarDetalle() {
+    document.getElementById('modal-detalle').classList.remove('activo')
+  }
+
+  async function exportar() {
+    window.location.href = '/api/reportes/exportar'
+  }
+
+  cargarVentas()
+</script>
+
+</body>
+</html>

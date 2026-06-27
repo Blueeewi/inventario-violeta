@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventario Violeta</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    header {
+      background: #6c3483;
+      color: white;
+      padding: 16px 24px;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .contenido {
+      max-width: 1100px;
+      margin: 24px auto;
+      padding: 0 16px;
+    }
+
+    .barra-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      gap: 12px;
+    }
+
+    input[type="text"] {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+      width: 300px;
+    }
+
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .btn-agregar {
+      background: #6c3483;
+      color: white;
+    }
+
+    .btn-agregar:hover { background: #5b2c6f; }
+
+    .btn-eliminar {
+      background: #e74c3c;
+      color: white;
+      padding: 5px 10px;
+      font-size: 12px;
+    }
+
+    .btn-editar {
+      background: #2980b9;
+      color: white;
+      padding: 5px 10px;
+      font-size: 12px;
+    }
+
+    table {
+      width: 100%;
+      background: white;
+      border-radius: 8px;
+      border-collapse: collapse;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+
+    th {
+      background: #6c3483;
+      color: white;
+      padding: 12px;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #eee;
+      font-size: 13px;
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fdf2ff; }
+
+    .modal-fondo {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-fondo.activo { display: flex; }
+
+    .modal {
+      background: white;
+      border-radius: 10px;
+      padding: 24px;
+      width: 420px;
+      max-width: 95%;
+    }
+
+    .modal h2 {
+      margin-bottom: 16px;
+      color: #6c3483;
+      font-size: 18px;
+    }
+
+    .campo {
+      margin-bottom: 12px;
+    }
+
+    .campo label {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 4px;
+      color: #555;
+    }
+
+    .campo input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .modal-botones {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .btn-cancelar { background: #ccc; color: #333; }
+    .btn-guardar { background: #6c3483; color: white; }
+
+    .total-productos {
+      font-size: 13px;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+
+<header>🛍️ Inventario Violeta</header>
+<nav style="background:#5b2c6f;display:flex;gap:4px;padding:0 24px;">
+  <a href="/" style="color:white;text-decoration:none;padding:10px 16px;font-size:14px;">Productos</a>
+  <a href="/inventario.html" style="color:#ddd;text-decoration:none;padding:10px 16px;font-size:14px;">Inventario</a>
+  <a href="/ventas.html" style="color:#ddd;text-decoration:none;padding:10px 16px;font-size:14px;">Ventas</a>
+  <a href="/reportes.html" style="color:#ddd;text-decoration:none;padding:10px 16px;font-size:14px;">Reportes</a>
+</nav>
+
+  <div style="max-width:1100px;margin:24px auto 0;padding:0 16px;display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+  <div style="background:white;border-radius:8px;padding:16px 20px;box-shadow:0 1px 4px rgba(0,0,0,0.1)">
+    <div style="font-size:12px;color:#999;margin-bottom:4px">Total productos</div>
+    <div style="font-size:24px;font-weight:bold;color:#6c3483" id="stat-productos">—</div>
+  </div>
+  <div style="background:white;border-radius:8px;padding:16px 20px;box-shadow:0 1px 4px rgba(0,0,0,0.1)">
+    <div style="font-size:12px;color:#999;margin-bottom:4px">Ventas hoy</div>
+    <div style="font-size:24px;font-weight:bold;color:#6c3483" id="stat-ventas-hoy">—</div>
+  </div>
+  <div style="background:white;border-radius:8px;padding:16px 20px;box-shadow:0 1px 4px rgba(0,0,0,0.1)">
+    <div style="font-size:12px;color:#999;margin-bottom:4px">Ingresos hoy</div>
+    <div style="font-size:24px;font-weight:bold;color:#6c3483" id="stat-ingresos-hoy">—</div>
+  </div>
+  <div style="background:white;border-radius:8px;padding:16px 20px;box-shadow:0 1px 4px rgba(0,0,0,0.1)">
+    <div style="font-size:12px;color:#999;margin-bottom:4px">Productos sin stock</div>
+    <div style="font-size:24px;font-weight:bold;color:#e74c3c" id="stat-sin-stock">—</div>
+  </div>
+</div>
+
+<div class="contenido">
+  <div class="barra-top">
+    <span class="total-productos" id="total">Cargando...</span>
+    <input type="text" id="busqueda" placeholder="Buscar por nombre, código o marca..." oninput="buscar()">
+    <button class="btn-agregar" onclick="abrirModal()">+ Agregar producto</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Código</th>
+        <th>Nombre</th>
+        <th>Marca</th>
+        <th>Tipo</th>
+        <th>Precio compra</th>
+        <th>Precio venta</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody id="tabla-productos">
+      <tr><td colspan="6" style="text-align:center;padding:24px;color:#999">Cargando productos...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Modal agregar/editar -->
+<div class="modal-fondo" id="modal-fondo">
+  <div class="modal">
+    <h2 id="modal-titulo">Agregar producto</h2>
+    <input type="hidden" id="producto-id">
+    <div class="campo">
+      <label>Código</label>
+      <input type="text" id="campo-codigo" placeholder="Ej: MT2397">
+    </div>
+    <div class="campo">
+      <label>Nombre</label>
+      <input type="text" id="campo-nombre" placeholder="Ej: Kit Splash Polly Pocket">
+    </div>
+    <div class="campo">
+      <label>Marca</label>
+      <input type="text" id="campo-marca" placeholder="Ej: Trendy">
+    </div>
+    <div class="campo">
+      <label>Precio de compra</label>
+      <input type="number" id="campo-precio-compra" placeholder="0">
+    </div>
+    <div class="campo">
+      <label>Precio de venta</label>
+      <input type="number" id="campo-precio-venta" placeholder="0">
+    </div>
+    <div class="campo">
+      <label>Tipo</label>
+       <select id="campo-tipo" style="width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:6px;font-size:14px;">
+       <option value="PRODUCTO">Producto</option>
+     <option value="SERVICIO">Servicio</option>
+     </select>
+    </div>
+
+    <div class="modal-botones">
+      <button class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-guardar" onclick="guardarProducto()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+  async function cargarStats() {
+  const [productos, ventas, inventario] = await Promise.all([
+    fetch('/api/productos').then(r => r.json()),
+    fetch('/api/ventas').then(r => r.json()),
+    fetch('/api/inventario').then(r => r.json())
+  ])
+
+  const hoy = new Date().toISOString().substring(0, 10)
+  const ventasHoy = ventas.filter(v => v.fecha && v.fecha.startsWith(hoy))
+  const ingresosHoy = ventasHoy.reduce((sum, v) => sum + v.total, 0)
+  const sinStock = inventario.filter(p => p.stock <= 0).length
+
+  document.getElementById('stat-productos').textContent = productos.length
+  document.getElementById('stat-ventas-hoy').textContent = ventasHoy.length
+  document.getElementById('stat-ingresos-hoy').textContent = '$' + Number(ingresosHoy).toLocaleString('es-CO')
+  document.getElementById('stat-sin-stock').textContent = sinStock
+}
+
+cargarStats()
+
+  let productoEditandoId = null
+
+  function formatPrecio(valor) {
+    if (!valor) return '$0'
+    return '$' + Number(valor).toLocaleString('es-CO')
+  }
+
+  async function cargarProductos(q = '') {
+    const url = q ? `/api/productos?q=${encodeURIComponent(q)}` : '/api/productos'
+    const res = await fetch(url)
+    const productos = await res.json()
+
+    const tbody = document.getElementById('tabla-productos')
+    const total = document.getElementById('total')
+    total.textContent = `${productos.length} productos`
+
+    if (productos.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#999">No se encontraron productos</td></tr>'
+      return
+    }
+
+    tbody.innerHTML = productos.map(p => `
+      <tr>
+        <td>${p.codigo}</td>
+        <td>${p.nombre}</td>
+        <td>${p.marca || '-'}</td>
+        <td>
+          <span style="padding:3px 8px;border-radius:20px;font-size:11px;background:${p.tipo === 'SERVICIO' ? '#eaf4fb' : '#f0e6ff'};color:${p.tipo === 'SERVICIO' ? '#1a5276' : '#6c3483'}">
+            ${p.tipo}
+          </span>
+        </td>
+        <td>${formatPrecio(p.precio_compra)}</td>
+        <td>${formatPrecio(p.precio_venta)}</td>
+        <td style="display:flex;gap:6px">
+          <button class="btn-editar" onclick="abrirEditar(${p.id}, '${p.codigo}', \`${p.nombre}\`, '${p.marca || ''}', ${p.precio_compra}, ${p.precio_venta}, '${p.tipo}')">Editar</button>
+          <button class="btn-eliminar" onclick="eliminarProducto(${p.id}, '${p.nombre}')">Eliminar</button>
+        </td>
+      </tr>
+    `).join('')
+  }
+
+  function buscar() {
+    const q = document.getElementById('busqueda').value
+    cargarProductos(q)
+  }
+
+  function abrirModal() {
+    productoEditandoId = null
+    document.getElementById('modal-titulo').textContent = 'Agregar producto'
+    document.getElementById('campo-codigo').value = ''
+    document.getElementById('campo-nombre').value = ''
+    document.getElementById('campo-marca').value = ''
+    document.getElementById('campo-precio-compra').value = ''
+    document.getElementById('campo-precio-venta').value = ''
+    document.getElementById('campo-tipo').value = 'PRODUCTO'
+    document.getElementById('modal-fondo').classList.add('activo')
+  }
+
+  function abrirEditar(id, codigo, nombre, marca, precioCompra, precioVenta, tipo) {
+    productoEditandoId = id
+    document.getElementById('modal-titulo').textContent = 'Editar producto'
+    document.getElementById('campo-codigo').value = codigo
+    document.getElementById('campo-nombre').value = nombre
+    document.getElementById('campo-marca').value = marca
+    document.getElementById('campo-precio-compra').value = precioCompra
+    document.getElementById('campo-precio-venta').value = precioVenta
+    document.getElementById('campo-tipo').value = tipo
+    document.getElementById('modal-fondo').classList.add('activo')
+  }
+
+  function cerrarModal() {
+    document.getElementById('modal-fondo').classList.remove('activo')
+  }
+
+  async function guardarProducto() {
+    const datos = {
+      codigo: document.getElementById('campo-codigo').value.trim(),
+      nombre: document.getElementById('campo-nombre').value.trim(),
+      marca: document.getElementById('campo-marca').value.trim(),
+      precio_compra: parseFloat(document.getElementById('campo-precio-compra').value) || 0,
+      precio_venta: parseFloat(document.getElementById('campo-precio-venta').value) || 0,
+      tipo: document.getElementById('campo-tipo').value
+    }
+
+    if (!datos.codigo || !datos.nombre) {
+      alert('El código y el nombre son obligatorios')
+      return
+    }
+
+    if (productoEditandoId) {
+      await fetch(`/api/productos/${productoEditandoId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datos)
+      })
+    } else {
+      await fetch('/api/productos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datos)
+      })
+    }
+
+    cerrarModal()
+    cargarProductos()
+  }
+
+  async function eliminarProducto(id, nombre) {
+    if (!confirm(`¿Seguro que deseas eliminar "${nombre}"?`)) return
+    await fetch(`/api/productos/${id}`, { method: 'DELETE' })
+    cargarProductos()
+  }
+
+  cargarProductos()
+</script>
+
+</body>
+</html>

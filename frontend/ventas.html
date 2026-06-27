@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventario Violeta</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: #f5f5f5; color: #333; }
+    header { background: #6c3483; color: white; padding: 16px 24px; font-size: 20px; font-weight: bold; }
+    nav { background: #5b2c6f; display: flex; gap: 4px; padding: 0 24px; }
+    nav a { color: #ddd; text-decoration: none; padding: 10px 16px; font-size: 14px; display: block; }
+    nav a:hover { color: white; background: rgba(255,255,255,0.1); }
+    nav a.activo { color: white; border-bottom: 3px solid white; }
+    .contenido { max-width: 1100px; margin: 24px auto; padding: 0 16px; display: grid; grid-template-columns: 1fr 340px; gap: 20px; }
+    .card { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+    .card h3 { color: #6c3483; font-size: 15px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .campo { margin-bottom: 12px; }
+    .campo label { display: block; font-size: 13px; margin-bottom: 4px; color: #555; }
+    .campo input, .campo select { width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+    .fila-producto { display: grid; grid-template-columns: 1fr 70px 110px 110px 36px; gap: 6px; align-items: center; margin-bottom: 8px; }
+    .fila-producto select, .fila-producto input { padding: 6px 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; width: 100%; }
+    .fila-producto input[disabled] { background: #f9f9f9; color: #aaa; }
+    button { padding: 8px 16px; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; }
+    .btn-agregar-item { background: #f0e6ff; color: #6c3483; font-size: 13px; padding: 6px 12px; margin-top: 4px; }
+    .btn-agregar-item:hover { background: #e0ccff; }
+    .btn-eliminar-item { background: #fde8e8; color: #e74c3c; border: none; border-radius: 4px; width: 28px; height: 28px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .btn-cobrar { width: 100%; background: #6c3483; color: white; padding: 12px; font-size: 15px; font-weight: bold; border-radius: 8px; margin-top: 8px; }
+    .btn-cobrar:hover { background: #5b2c6f; }
+    .btn-nueva { width: 100%; background: #eee; color: #333; padding: 10px; font-size: 14px; border-radius: 8px; margin-top: 8px; }
+    .resumen-fila { display: flex; justify-content: space-between; font-size: 14px; padding: 6px 0; border-bottom: 1px solid #f0f0f0; }
+    .resumen-fila.total { font-weight: bold; font-size: 16px; color: #6c3483; border-bottom: none; padding-top: 10px; }
+    .etiqueta-headers { display: grid; grid-template-columns: 1fr 70px 110px 110px 36px; gap: 6px; margin-bottom: 4px; }
+    .etiqueta-headers span { font-size: 11px; color: #999; }
+    .venta-guardada { display: none; text-align: center; padding: 20px 0; }
+    .venta-guardada .check { font-size: 48px; }
+    .venta-guardada p { color: #27ae60; font-weight: bold; font-size: 16px; margin-top: 8px; }
+    .venta-guardada small { color: #999; font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<header>🛍️ Inventario Violeta</header>
+<nav style="background:#5b2c6f;display:flex;gap:4px;padding:0 24px;">
+  <a href="/" style="color:white;text-decoration:none;padding:10px 16px;font-size:14px;">Productos</a>
+  <a href="/inventario.html" style="color:#ddd;text-decoration:none;padding:10px 16px;font-size:14px;">Inventario</a>
+  <a href="/ventas.html" style="color:#ddd;text-decoration:none;padding:10px 16px;font-size:14px;">Ventas</a>
+  <a href="/reportes.html" style="color:#ddd;text-decoration:none;padding:10px 16px;font-size:14px;">Reportes</a>
+</nav>
+
+<div class="contenido">
+
+  <!-- Columna izquierda: formulario -->
+  <div>
+    <div class="card" style="margin-bottom:16px">
+      <h3>Datos de la venta</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="campo">
+          <label>Cliente *</label>
+          <input type="text" id="campo-cliente" placeholder="Nombre del cliente">
+        </div>
+        <div class="campo">
+          <label>Colaborador</label>
+          <input type="text" id="campo-colaborador" placeholder="Nombre del colaborador">
+        </div>
+        <div class="campo">
+          <label>% Comisión</label>
+          <input type="number" id="campo-comision" placeholder="0" min="0" max="100" value="0">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Productos y servicios</h3>
+      <div class="etiqueta-headers">
+        <span>Producto / Servicio</span>
+        <span>Cant.</span>
+        <span>Precio unit.</span>
+        <span>Total</span>
+        <span></span>
+      </div>
+      <div id="lista-items"></div>
+      <button class="btn-agregar-item" onclick="agregarItem()">+ Agregar ítem</button>
+    </div>
+  </div>
+
+  <!-- Columna derecha: resumen -->
+  <div>
+    <div class="card">
+      <h3>Resumen</h3>
+      <div id="resumen-items" style="margin-bottom:12px;font-size:13px;color:#999">Sin items</div>
+      <div class="resumen-fila"><span>Subtotal</span><span id="resumen-subtotal">$0</span></div>
+      <div class="resumen-fila"><span>IVA</span><span>$0</span></div>
+      <div class="resumen-fila total"><span>Total</span><span id="resumen-total">$0</span></div>
+      <div class="resumen-fila" style="border:none;padding-top:8px"><span style="font-size:13px;color:#999">Comisión (<span id="resumen-pct">0</span>%)</span><span id="resumen-comision" style="font-size:13px;color:#999">$0</span></div>
+
+      <div class="venta-guardada" id="venta-guardada">
+        <div class="check">✅</div>
+        <p>Venta registrada</p>
+        <small id="venta-id-texto"></small>
+      </div>
+
+      <button class="btn-cobrar" id="btn-cobrar" onclick="guardarVenta()">Registrar venta</button>
+      <button class="btn-nueva" onclick="nuevaVenta()">Nueva venta</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let productos = []
+  let items = []
+
+  async function cargarProductos() {
+    const res = await fetch('/api/productos')
+    productos = await res.json()
+    agregarItem()
+  }
+
+  function formatPrecio(v) {
+    return '$' + Number(v || 0).toLocaleString('es-CO')
+  }
+
+  function agregarItem() {
+    const id = Date.now()
+    items.push({ id, producto_id: '', cantidad: 1, precio_unitario: 0, precio_manual: null, total: 0, es_servicio: false })
+    renderItems()
+  }
+
+  function eliminarItem(id) {
+    items = items.filter(i => i.id !== id)
+    renderItems()
+    actualizarResumen()
+  }
+
+  function renderItems() {
+    const contenedor = document.getElementById('lista-items')
+    contenedor.innerHTML = items.map(item => `
+      <div class="fila-producto" id="fila-${item.id}">
+        <select onchange="seleccionarProducto(${item.id}, this.value)">
+          <option value="">— Seleccionar —</option>
+          ${productos.map(p => `<option value="${p.id}" ${p.id == item.producto_id ? 'selected' : ''}>${p.nombre} ${p.tipo === 'SERVICIO' ? '(Servicio)' : ''}</option>`).join('')}
+        </select>
+        <input type="number" min="1" value="${item.cantidad}" onchange="actualizarCantidad(${item.id}, this.value)" placeholder="1">
+        <input type="number" id="precio-${item.id}" value="${item.precio_manual || item.precio_unitario || ''}" 
+          ${!item.es_servicio && item.precio_unitario > 0 ? 'disabled' : ''}
+          onchange="actualizarPrecioManual(${item.id}, this.value)" placeholder="0">
+        <input type="text" value="${formatPrecio(item.total)}" disabled>
+        <button class="btn-eliminar-item" onclick="eliminarItem(${item.id})">×</button>
+      </div>
+    `).join('')
+  }
+
+  function seleccionarProducto(id, productoId) {
+    const item = items.find(i => i.id === id)
+    const producto = productos.find(p => p.id == productoId)
+    if (!producto) return
+
+    item.producto_id = productoId
+    item.es_servicio = producto.tipo === 'SERVICIO'
+    item.precio_unitario = producto.precio_venta || 0
+    item.precio_manual = item.es_servicio ? null : null
+    item.total = item.cantidad * item.precio_unitario
+    renderItems()
+    actualizarResumen()
+  }
+
+  function actualizarCantidad(id, valor) {
+    const item = items.find(i => i.id === id)
+    item.cantidad = parseInt(valor) || 1
+    const precio = item.precio_manual || item.precio_unitario
+    item.total = item.cantidad * precio
+    renderItems()
+    actualizarResumen()
+  }
+
+  function actualizarPrecioManual(id, valor) {
+    const item = items.find(i => i.id === id)
+    item.precio_manual = parseFloat(valor) || 0
+    item.total = item.cantidad * item.precio_manual
+    renderItems()
+    actualizarResumen()
+  }
+
+  function actualizarResumen() {
+    const subtotal = items.reduce((sum, i) => sum + i.total, 0)
+    const pct = parseFloat(document.getElementById('campo-comision').value) || 0
+    const comision = (subtotal * pct) / 100
+
+    document.getElementById('resumen-subtotal').textContent = formatPrecio(subtotal)
+    document.getElementById('resumen-total').textContent = formatPrecio(subtotal)
+    document.getElementById('resumen-pct').textContent = pct
+    document.getElementById('resumen-comision').textContent = formatPrecio(comision)
+
+    const resumenItems = document.getElementById('resumen-items')
+    const itemsConProducto = items.filter(i => i.producto_id)
+    if (itemsConProducto.length === 0) {
+      resumenItems.innerHTML = '<span style="color:#999">Sin items</span>'
+    } else {
+      resumenItems.innerHTML = itemsConProducto.map(i => {
+        const p = productos.find(p => p.id == i.producto_id)
+        return `<div style="display:flex;justify-content:space-between;padding:3px 0">${p ? p.nombre : ''} x${i.cantidad} <span>${formatPrecio(i.total)}</span></div>`
+      }).join('')
+    }
+  }
+
+  document.getElementById('campo-comision').addEventListener('input', actualizarResumen)
+
+  async function guardarVenta() {
+    const cliente = document.getElementById('campo-cliente').value.trim()
+    const colaborador = document.getElementById('campo-colaborador').value.trim()
+    const porcentaje_comision = parseFloat(document.getElementById('campo-comision').value) || 0
+
+    const itemsValidos = items.filter(i => i.producto_id)
+    if (itemsValidos.length === 0) {
+      alert('Agrega al menos un producto o servicio')
+      return
+    }
+
+    const payload = {
+      cliente,
+      colaborador,
+      porcentaje_comision,
+      items: itemsValidos.map(i => ({
+        producto_id: i.producto_id,
+        cantidad: i.cantidad,
+        precio_unitario: i.precio_unitario,
+        precio_manual: i.precio_manual,
+        total: i.total
+      }))
+    }
+
+    const res = await fetch('/api/ventas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+
+    const data = await res.json()
+
+    if (!res.ok) {
+      alert(data.error)
+      return
+    }
+
+    document.getElementById('venta-guardada').style.display = 'block'
+    document.getElementById('venta-id-texto').textContent = `Venta #${data.id}`
+    document.getElementById('btn-cobrar').style.display = 'none'
+  }
+
+  function nuevaVenta() {
+    document.getElementById('campo-cliente').value = ''
+    document.getElementById('campo-colaborador').value = ''
+    document.getElementById('campo-comision').value = '0'
+    document.getElementById('venta-guardada').style.display = 'none'
+    document.getElementById('btn-cobrar').style.display = 'block'
+    items = []
+    agregarItem()
+    actualizarResumen()
+  }
+
+  cargarProductos()
+</script>
+
+</body>
+</html>
