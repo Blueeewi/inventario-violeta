@@ -2,7 +2,6 @@ const express = require('express')
 const router = express.Router()
 const db = require('../database/db')
 
-// Obtener todos los productos (con búsqueda opcional)
 router.get('/', (req, res) => {
   const { q } = req.query
   let productos
@@ -22,12 +21,40 @@ router.get('/', (req, res) => {
   res.json(productos)
 })
 
-// Agregar un producto nuevo
 router.post('/', (req, res) => {
   const { codigo, nombre, marca, precio_compra, precio_venta, tipo } = req.body
+  const forzar = req.query.forzar === 'true'
 
   if (!codigo || !nombre) {
     return res.status(400).json({ error: 'El código y nombre son obligatorios' })
+  }
+
+  if (!forzar) {
+    const duplicadoExacto = db.prepare(`
+      SELECT id, nombre, codigo FROM productos 
+      WHERE LOWER(TRIM(codigo)) = LOWER(TRIM(?)) 
+      OR LOWER(TRIM(nombre)) = LOWER(TRIM(?))
+    `).get(codigo, nombre)
+
+    if (duplicadoExacto) {
+      return res.status(400).json({ 
+        error: `Ya existe un producto con ese código o nombre: "${duplicadoExacto.nombre}" (${duplicadoExacto.codigo})`
+      })
+    }
+
+    const similar = db.prepare(`
+      SELECT id, nombre, codigo FROM productos 
+      WHERE LOWER(nombre) LIKE LOWER(?) 
+      AND LOWER(TRIM(nombre)) != LOWER(TRIM(?))
+    `).get(`%${nombre.substring(0, 6)}%`, nombre)
+
+    if (similar) {
+      return res.status(409).json({ 
+        advertencia: true,
+        mensaje: `Existe un producto similar: "${similar.nombre}" (${similar.codigo}). ¿Deseas continuar de todas formas?`,
+        continuar: true
+      })
+    }
   }
 
   const resultado = db.prepare(`
@@ -38,7 +65,6 @@ router.post('/', (req, res) => {
   res.json({ id: resultado.lastInsertRowid, mensaje: 'Producto creado correctamente' })
 })
 
-// Editar un producto
 router.put('/:id', (req, res) => {
   const { codigo, nombre, marca, precio_compra, precio_venta, tipo } = req.body
   const { id } = req.params
@@ -52,7 +78,6 @@ router.put('/:id', (req, res) => {
   res.json({ mensaje: 'Producto actualizado correctamente' })
 })
 
-// Eliminar un producto
 router.delete('/:id', (req, res) => {
   const { id } = req.params
   db.prepare('DELETE FROM productos WHERE id = ?').run(id)

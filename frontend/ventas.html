@@ -246,6 +246,9 @@
     document.getElementById('venta-guardada').style.display = 'block'
     document.getElementById('venta-id-texto').textContent = `Venta #${data.id}`
     document.getElementById('btn-cobrar').style.display = 'none'
+    setTimeout(() => {
+    window.open(`/api/ventas/${data.id}/factura`, '_blank')
+    },  500)
   }
 
   function nuevaVenta() {

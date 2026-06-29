@@ -20,6 +20,6 @@ app.get('/ping', (req, res) => {
   res.json({ mensaje: 'El servidor está funcionando' })
 })
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`)
 })
