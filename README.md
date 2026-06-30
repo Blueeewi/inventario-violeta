@@ -53,26 +53,47 @@ Luego desde cualquier dispositivo en la misma red entra a `http://[IP]:3000`
 ## Estructura del proyecto
 
 inventario-violeta/
+
 ├── backend/
+
 │   ├── server.js
+
 │   ├── productos.js
+
 │   ├── inventario.js
+
 │   ├── ventas.js
+
 │   ├── reportes.js
+
 │   └── factura.js
+
 ├── database/
+
 │   ├── db.js
+
 │   ├── schema.sql
+
 │   └── migrar.js
+
 ├── frontend/
+
 │   ├── index.html
+
 │   ├── inventario.html
+
 │   ├── ventas.html
+
 │   ├── reportes.html
+
 │   └── css/
+
 │       └── style.css
+
 ├── iniciar.bat
+
 ├── iniciar.sh
+
 └── package.json
 
 ## Módulos
